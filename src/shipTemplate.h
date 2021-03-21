@@ -119,8 +119,8 @@ public:
     int weapon_storage[MW_Count];
 
     string radar_trace;
-    float long_range_radar_range = 30000.0f;
-    float short_range_radar_range = 5000.0f;
+    float long_range_radar_range;
+    float short_range_radar_range;
     string impulse_sound_file;
 
     std::vector<ShipRoomTemplate> rooms;
@@ -202,10 +202,4 @@ REGISTER_MULTIPLAYER_ENUM(ESystem);
 
 /* Define script conversion function for the ShipTemplate::TemplateType enum. */
 template<> void convert<ShipTemplate::TemplateType>::param(lua_State* L, int& idx, ShipTemplate::TemplateType& tt);
-
-#ifdef _MSC_VER
-// MFC: GCC does proper external template instantiation, VC++ doesn't.
-#include "shipTemplate.hpp"
-#endif /* _MSC_VER */
-
 #endif//SHIP_TEMPLATE_H

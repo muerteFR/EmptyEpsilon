@@ -21,14 +21,6 @@ GameGlobalInfo::GameGlobalInfo()
         registerMemberReplication(&playerShipId[n]);
     }
 
-    for(int n=0; n<max_nebulas; n++)
-    {
-        nebula_info[n].vector = sf::Vector3f(random(-1, 1), random(-1, 1), random(-1, 1));
-        nebula_info[n].textureName = "Nebula" + string(irandom(1, 3));
-        registerMemberReplication(&nebula_info[n].vector);
-        registerMemberReplication(&nebula_info[n].textureName);
-    }
-
     global_message_timeout = 0.0;
     player_warp_jump_drive_setting = PWJ_ShipDefault;
     scanning_complexity = SC_Normal;
@@ -154,9 +146,14 @@ void GameGlobalInfo::addScript(P<Script> script)
 
 void GameGlobalInfo::reset()
 {
+    if (state_logger)
+        state_logger->destroy();
+
     gm_callback_functions.clear();
     gm_messages.clear();
     on_gm_click = nullptr;
+
+    flushDatabaseData();
 
     foreach(GameEntity, e, entityList)
         e->destroy();
@@ -185,7 +182,6 @@ void GameGlobalInfo::startScenario(string filename)
     i18n::load("locale/" + PreferencesManager::get("language", "en") + ".po");
     i18n::load("locale/" + filename.replace(".lua", "." + PreferencesManager::get("language", "en") + ".po"));
 
-    flushDatabaseData();
     fillDefaultDatabaseData();
 
     P<ScriptObject> scienceInfoScript = new ScriptObject("science_db.lua");
@@ -207,8 +203,6 @@ void GameGlobalInfo::destroy()
 {
     reset();
     MultiplayerObject::destroy();
-    if (state_logger)
-        state_logger->destroy();
 }
 
 string playerWarpJumpDriveToString(EPlayerWarpJumpDrive player_warp_jump_drive)
@@ -267,6 +261,7 @@ static int victory(lua_State* L)
 }
 /// victory(string)
 /// Called with a faction name as parameter, sets a certain faction as victor and ends the game.
+/// (The GM can unpause the game, but the scenario with its update function is destroyed.)
 REGISTER_SCRIPT_FUNCTION(victory);
 
 static int globalMessage(lua_State* L)
@@ -321,6 +316,26 @@ static int getPlayerShip(lua_State* L)
 /// getPlayerShip(index)
 /// Return the player's ship, use -1 to get the first active player ship.
 REGISTER_SCRIPT_FUNCTION(getPlayerShip);
+
+static int getActivePlayerShips(lua_State* L)
+{
+    PVector<PlayerSpaceship> ships;
+    ships.reserve(GameGlobalInfo::max_player_ships);
+    for (auto index = 0; index < GameGlobalInfo::max_player_ships; ++index)
+    {
+        auto ship = gameGlobalInfo->getPlayerShip(index);
+        
+        if (ship)
+        {
+            ships.emplace_back(std::move(ship));
+        }
+    }
+
+    return convert<PVector<PlayerSpaceship>>::returnType(L, ships);
+}
+/// getActivePlayerShips()
+/// Return a list of active player ships.
+REGISTER_SCRIPT_FUNCTION(getActivePlayerShips);
 
 static int getObjectsInRadius(lua_State* L)
 {

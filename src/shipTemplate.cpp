@@ -152,8 +152,11 @@ ShipTemplate::ShipTemplate()
     has_cloaking = false;
     for(int n=0; n<MW_Count; n++)
         weapon_storage[n] = 0;
+    long_range_radar_range = 30000.0f;
+    short_range_radar_range = 5000.0f;
     radar_trace = "RadarArrow.png";
     impulse_sound_file = "sfx/engine.wav";
+    default_ai_name = "default";
 }
 
 void ShipTemplate::setBeamTexture(int index, string texture)
@@ -597,6 +600,4 @@ ShipTemplate::TemplateType ShipTemplate::getType()
     return type;
 }
 
-#ifndef _MSC_VER
 #include "shipTemplate.hpp"
-#endif /* _MSC_VER */
